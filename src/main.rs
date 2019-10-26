@@ -30,6 +30,10 @@ fn main() {
             Arg::with_name("steps")
                 .short("s")
                 .help("Print the steps for solution")
+        ).arg(
+            Arg::with_name("unsolved")
+                .short("u")
+                .help("Print possible values for unsolved positions")
         ).get_matches();
 
     let quiet = args.is_present("quiet");
@@ -58,6 +62,12 @@ fn main() {
 
     board.solve();
 
+    let mut unsolved = if args.is_present("unsolved") {
+        Some(Vec::new())
+    } else {
+        None
+    };
+
     if !quiet {
         println!("\nSolution:\n");
     }
@@ -75,11 +85,28 @@ fn main() {
         }
 
         match e {
-            Field::Options(_) => print!("."),
+            Field::Options(opts) => {
+                print!(".");
+                if let Some(ref mut u) = unsolved {
+                    u.push((i, opts));
+                }
+            }
             Field::Value(v) => print!("{}", v),
         }
     }
     println!();
+
+    if let Some(uns) = unsolved {
+        if !uns.is_empty() {
+            if !quiet {
+                println!("\nUnsolved:");
+            }
+
+            for (idx, val) in uns {
+                println!("  ({}, {}) = {:?}", (idx / 9) + 1, (idx % 9) + 1, val);
+            }
+        }
+    }
 
     if let Some(steps) = board.steps() {
         if !quiet {
