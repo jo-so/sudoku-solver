@@ -25,6 +25,7 @@ impl Field {
 pub struct Board {
     data: Vec<Field>,
     changed: bool,
+    steps: Option<Vec<(u8, u8)>>,
 }
 
 impl Board {
@@ -37,6 +38,7 @@ impl Board {
         Board {
             data,
             changed: false,
+            steps: None,
         }
     }
 
@@ -74,6 +76,10 @@ impl Board {
         ret
     }
 
+    pub fn record_steps(&mut self, enable: bool) {
+        self.steps = if enable { Some(Vec::new()) } else { None };
+    }
+
     #[allow(dead_code)]
     pub fn field(&self, pos: (usize, usize)) -> &Field {
         &self.data[pos.0 * 9 + pos.1]
@@ -83,11 +89,19 @@ impl Board {
         &self.data
     }
 
+    pub fn steps(&self) -> &Option<Vec<(u8, u8)>> {
+        &self.steps
+    }
+
     fn set_idx(&mut self, idx: usize, val: u8) {
         self.data[idx].set(val);
 
         for pos in Self::neighbours((idx / 9, idx % 9)) {
             self.data[pos.0 * 9 + pos.1].remove_option(val);
+        }
+
+        if let Some(ref mut steps) = self.steps {
+            steps.push( (idx as u8, val) );
         }
 
         self.changed = true;

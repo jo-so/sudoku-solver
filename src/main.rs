@@ -1,5 +1,6 @@
 #![feature(vec_remove_item)]
 use std::{
+    env,
     io::{self, Read},
     process,
 };
@@ -24,6 +25,10 @@ fn main() {
     let mut board = board_from_string(&buffer);
     drop(buffer);
 
+    if env::args().nth(1).map_or(false, |x| x == "-s") {
+        board.record_steps(true);
+    }
+
     board.solve();
 
     print!("\nSolution:\n\n  ");
@@ -45,6 +50,13 @@ fn main() {
         }
     }
     println!();
+
+    if let Some(steps) = board.steps() {
+        println!("\nSteps:");
+        for (i, (idx, val)) in steps.iter().enumerate() {
+            println!("  {:2}. ({}, {}) = {}", i + 1, (idx / 9) + 1, (idx % 9) + 1, val);
+        }
+    }
 }
 
 fn board_from_string(data: &str) -> Board {
