@@ -1,4 +1,13 @@
 #![feature(vec_remove_item)]
+use clap::{
+    crate_authors,
+    crate_description,
+    crate_name,
+    crate_version,
+    App,
+    Arg,
+};
+
 use std::{
     env,
     io::{self, Read},
@@ -9,8 +18,26 @@ mod sudoku;
 use sudoku::{Board, Field};
 
 fn main() {
-    println!("Input initial board setting (space and newline are ignored, \
-              non-digit charaters define empty fields)\n");
+    let args = App::new(crate_name!())
+        .version(crate_version!())
+        .author(crate_authors!("\n"))
+        .about(crate_description!())
+        .arg(
+            Arg::with_name("quiet")
+                .short("q")
+                .help("Don't print infomational messages")
+        ).arg(
+            Arg::with_name("steps")
+                .short("s")
+                .help("Print the steps for solution")
+        ).get_matches();
+
+    let quiet = args.is_present("quiet");
+
+    if !quiet {
+        println!("Input initial board setting (space and newline are ignored, \
+                  non-digit charaters define empty fields)\n");
+    }
 
     let mut buffer = String::new();
     {
@@ -25,14 +52,17 @@ fn main() {
     let mut board = board_from_string(&buffer);
     drop(buffer);
 
-    if env::args().nth(1).map_or(false, |x| x == "-s") {
+    if args.is_present("steps") {
         board.record_steps(true);
     }
 
     board.solve();
 
-    print!("\nSolution:\n\n  ");
+    if !quiet {
+        println!("\nSolution:\n");
+    }
     let mut first = true;
+    print!("  ");
     for (i, e) in board.fields().iter().enumerate() {
         if first {
             first = false;
@@ -52,7 +82,10 @@ fn main() {
     println!();
 
     if let Some(steps) = board.steps() {
-        println!("\nSteps:");
+        if !quiet {
+            println!("\nSteps:");
+        }
+
         for (i, (idx, val)) in steps.iter().enumerate() {
             println!("  {:2}. ({}, {}) = {}", i + 1, (idx / 9) + 1, (idx % 9) + 1, val);
         }
