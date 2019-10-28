@@ -1,4 +1,3 @@
-#![feature(vec_remove_item)]
 use clap::{
     crate_authors,
     crate_description,
@@ -9,7 +8,6 @@ use clap::{
 };
 
 use std::{
-    env,
     io::{self, Read},
     process,
 };

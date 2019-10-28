@@ -17,7 +17,7 @@ impl Field {
 
     pub fn remove_option(&mut self, val: u8) {
         if let Field::Options(opts) = self {
-            opts.remove_item(&val);
+            opts.retain(|&x| x != val);
         }
     }
 }
