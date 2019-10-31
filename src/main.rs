@@ -119,11 +119,15 @@ fn main() {
 
 fn board_from_string(data: &str) -> Board {
     let mut board = Board::new();
-    board.fill(
-        data.chars()
-            .filter(|c| !c.is_whitespace())
-            .map(|c| c.to_digit(10).map(|x| x as u8))
-    );
+    board.fill(data.chars().filter(|c| !c.is_whitespace()).map(|c| {
+        c.to_digit(10).and_then(|x| {
+            if 1 <= x && x <= 9 {
+                Some(x as u8)
+            } else {
+                None
+            }
+        })
+    }));
     board
 }
 
