@@ -120,7 +120,7 @@ impl Board {
             .for_each(|(i, val)| self.set_idx(i, val as u8));
     }
 
-    fn solve_with_one_option(&mut self) {
+    fn solve_sole_option(&mut self) {
         self.data
             .iter()
             .enumerate()
@@ -133,7 +133,7 @@ impl Board {
             .for_each(|(idx, val)| self.set_idx(*idx, *val));
     }
 
-    fn solve_single_in_neighbourhood(
+    fn solve_by_neighbourhood(
         &mut self, positions: impl Iterator<Item = usize>
     ) {
         let mut list : [Vec<_>; 9] = Default::default();
@@ -147,8 +147,41 @@ impl Board {
         }
 
         for (num, e) in list.iter().enumerate() {
-            if e.len() == 1 {
-                self.set_idx(e[0], num as u8 + 1);
+            let num = num as u8 + 1;
+
+            match e.len() {
+                0 => (),
+                1 => self.set_idx(e[0], num),
+                _ => {
+                    let mut it = e.iter();
+                    let (row, col) = match it.next().unwrap() {
+                        x => (x / 9, x % 9),
+                    };
+
+                    let mut sole_row = true;
+                    let mut sole_col = true;
+                    while let Some(x) = it.next() {
+                        if x / 9 != row {
+                            sole_row = false;
+                        }
+
+                        if x % 9 != col {
+                            sole_col = false;
+                        }
+                    }
+
+                    if sole_row {
+                        (0..9).map(|c| row * 9 + c)
+                            .filter(|idx| !e.contains(&idx))
+                            .for_each(|idx| self.data[idx].remove_option(num));
+                    }
+
+                    if sole_col {
+                        (0..9).map(|r| r * 9 + col)
+                            .filter(|idx| !e.contains(&idx))
+                            .for_each(|idx| self.data[idx].remove_option(num));
+                    }
+                }
             }
         }
     }
@@ -156,14 +189,14 @@ impl Board {
     pub fn solve(&mut self) {
         loop {
             self.changed = false;
-            self.solve_with_one_option();
+            self.solve_sole_option();
 
             for row in 0..9 {
-                self.solve_single_in_neighbourhood((0..9).map(|c| row * 9 + c));
+                self.solve_by_neighbourhood((0..9).map(|c| row * 9 + c));
             }
 
             for col in 0..9 {
-                self.solve_single_in_neighbourhood((0..9).map(|r| r * 9 + col));
+                self.solve_by_neighbourhood((0..9).map(|r| r * 9 + col));
             }
 
             for square_row in 0..3 {
@@ -171,7 +204,7 @@ impl Board {
                     let square_base_row = 3 * square_row;
                     let square_base_col = 3 * square_col;
 
-                    self.solve_single_in_neighbourhood(
+                    self.solve_by_neighbourhood(
                         (square_base_row .. square_base_row + 3).flat_map(|r| {
                             (square_base_col .. square_base_col + 3)
                                 .map(move |c| r * 9 + c)
@@ -328,6 +361,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn solve_very_hard() {
         // https://sudoku.zeit.de/sudoku-sehr-schwer 26.10.2019
         let mut board = board_from_string(
@@ -364,6 +398,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore]
     fn solve_very_hard_2() {
         // http://opensudoku.moire.org/#about-puzzles
         let mut board = board_from_string(
@@ -395,6 +430,40 @@ mod tests {
                 3, 8, 9,   4, 2, 7,   5, 6, 1,
                 2, 6, 1,   3, 9, 5,   4, 7, 8,
                 7, 5, 4,   8, 1, 6,   3, 9, 2,
+            ]
+        );
+    }
+
+    #[test]
+    fn solve_by_neighbourhood() {
+        let mut board = board_from_string(
+            "..8   ...   ...\
+             914   536   ...\
+             657   ..8   ...\
+
+             ...   2..   ...\
+             ...   ...   ...\
+             ...   ...   ..."
+        );
+        board.solve();
+
+        // because you know 2 must be on L1C1 or L1C2 it can not be on L1C4
+        // and hence, must be on L3C4
+
+        assert_eq!(
+            board.to_num_vec(),
+            vec![
+                0, 0, 8,   0, 0, 0,   0, 0, 0,
+                9, 1, 4,   5, 3, 6,   0, 0, 0,
+                6, 5, 7,   0, 2, 8,   0, 0, 0,
+
+                0, 0, 0,   2, 0, 0,   0, 0, 0,
+                0, 0, 0,   0, 0, 0,   0, 0, 0,
+                0, 0, 0,   0, 0, 0,   0, 0, 0,
+
+                0, 0, 0,   0, 0, 0,   0, 0, 0,
+                0, 0, 0,   0, 0, 0,   0, 0, 0,
+                0, 0, 0,   0, 0, 0,   0, 0, 0,
             ]
         );
     }
