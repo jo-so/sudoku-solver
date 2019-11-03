@@ -111,8 +111,10 @@ fn main() {
             println!("\nSteps:");
         }
 
-        for (i, (idx, val)) in steps.iter().enumerate() {
-            println!("  {:2}. ({}, {}) = {}", i + 1, (idx / 9) + 1, (idx % 9) + 1, val);
+        for (i, (idx, val, reason)) in steps.iter().enumerate() {
+            println!("  {:2}. ({}, {}) = {} ({})",
+                     i + 1, (idx / 9) + 1, (idx % 9) + 1, val, reason
+            );
         }
     }
 }

@@ -25,7 +25,7 @@ impl Field {
 pub struct Board {
     data: Vec<Field>,
     changed: bool,
-    steps: Option<Vec<(u8, u8)>>,
+    steps: Option<Vec<(u8, u8, &'static str)>>,
 }
 
 impl Board {
@@ -89,11 +89,11 @@ impl Board {
         &self.data
     }
 
-    pub fn steps(&self) -> &Option<Vec<(u8, u8)>> {
+    pub fn steps(&self) -> &Option<Vec<(u8, u8, &str)>> {
         &self.steps
     }
 
-    fn set_idx(&mut self, idx: usize, val: u8) {
+    fn set_idx(&mut self, idx: usize, val: u8, reason: &'static str) {
         self.data[idx].set(val);
 
         for pos in Self::neighbours((idx / 9, idx % 9)) {
@@ -101,7 +101,7 @@ impl Board {
         }
 
         if let Some(ref mut steps) = self.steps {
-            steps.push( (idx as u8, val) );
+            steps.push( (idx as u8, val, reason) );
         }
 
         self.changed = true;
@@ -109,7 +109,7 @@ impl Board {
 
     #[allow(dead_code)]
     pub fn set(&mut self, pos: (usize, usize), val: u8) {
-        self.set_idx(pos.0 * 9 + pos.1, val)
+        self.set_idx(pos.0 * 9 + pos.1, val, "known in advance")
     }
 
     pub fn fill(&mut self, data: impl Iterator<Item = Option<u8>>) {
@@ -117,7 +117,7 @@ impl Board {
             .take(self.data.len())
             .enumerate()
             .filter_map(|(i, e)| e.map(|x| (i, x)))
-            .for_each(|(i, val)| self.set_idx(i, val as u8));
+            .for_each(|(i, val)| self.set_idx(i, val as u8, "init"));
     }
 
     fn solve_sole_option(&mut self) {
@@ -130,7 +130,7 @@ impl Board {
             })
             .collect::<Vec<_>>()
             .iter()
-            .for_each(|(idx, val)| self.set_idx(*idx, *val));
+            .for_each(|(idx, val)| self.set_idx(*idx, *val, "sole option"));
     }
 
     fn solve_by_neighbourhood(
@@ -151,7 +151,7 @@ impl Board {
 
             match e.len() {
                 0 => (),
-                1 => self.set_idx(e[0], num),
+                1 => self.set_idx(e[0], num, "sole positon by neighbours"),
                 _ => {
                     let mut it = e.iter();
                     let (row, col) = match it.next().unwrap() {
