@@ -21,17 +21,17 @@ fn main() {
         .author(crate_authors!("\n"))
         .about(crate_description!())
         .arg(
-            Arg::with_name("quiet")
-                .short("q")
-                .help("Don't print infomational messages")
+            Arg::new("quiet")
+                .short('q')
+                .about("Don't print infomational messages")
         ).arg(
-            Arg::with_name("steps")
-                .short("s")
-                .help("Print the steps for solution")
+            Arg::new("steps")
+                .short('s')
+                .about("Print the steps for solution")
         ).arg(
-            Arg::with_name("unsolved")
-                .short("u")
-                .help("Print possible values for unsolved positions")
+            Arg::new("unsolved")
+                .short('u')
+                .about("Print possible values for unsolved positions")
         ).get_matches();
 
     let quiet = args.is_present("quiet");
