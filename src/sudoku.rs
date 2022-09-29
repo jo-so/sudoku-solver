@@ -10,7 +10,7 @@ impl Field {
     }
 
     pub fn set(&mut self, val: u8) {
-        assert!(1 <= val && val <= 9, "Invalid field value: {}", val);
+        assert!((1..=9).contains(&val), "Invalid field value: {}", val);
 
         *self = Field::Value(val);
     }
@@ -46,15 +46,13 @@ impl Board {
         let (row, col) = pos;
         let mut ret = Vec::with_capacity(9 + 9 + 9 - 4 - 3);
 
-        for c in 0..9 {
-            if c != col {
-                ret.push((row, c));
+        for x in 0..9 {
+            if x != col {
+                ret.push((row, x));
             }
-        }
 
-        for r in 0..9 {
-            if r != row {
-                ret.push((r, col));
+            if x != row {
+                ret.push((x, col));
             }
         }
 
@@ -154,13 +152,11 @@ impl Board {
                 1 => self.set_idx(e[0], num, "sole positon by neighbours"),
                 _ => {
                     let mut it = e.iter();
-                    let (row, col) = match it.next().unwrap() {
-                        x => (x / 9, x % 9),
-                    };
+                    let (row, col) = it.next().map(|x| (x / 9, x % 9)).unwrap();
 
                     let mut sole_row = true;
                     let mut sole_col = true;
-                    while let Some(x) = it.next() {
+                    for x in it {
                         if x / 9 != row {
                             sole_row = false;
                         }
@@ -172,13 +168,13 @@ impl Board {
 
                     if sole_row {
                         (0..9).map(|c| row * 9 + c)
-                            .filter(|idx| !e.contains(&idx))
+                            .filter(|idx| !e.contains(idx))
                             .for_each(|idx| self.data[idx].remove_option(num));
                     }
 
                     if sole_col {
                         (0..9).map(|r| r * 9 + col)
-                            .filter(|idx| !e.contains(&idx))
+                            .filter(|idx| !e.contains(idx))
                             .for_each(|idx| self.data[idx].remove_option(num));
                     }
                 }
@@ -236,7 +232,7 @@ mod tests {
             self.fields().iter().map(|x| match x {
                 Field::Options(_) => 0,
                 Field::Value(v) => *v,
-            }).collect::<Vec<_>>()
+            }).collect()
         }
     }
 
@@ -245,8 +241,8 @@ mod tests {
         assert_eq!(
             Board::neighbours((0, 0)),
             vec![
-                (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8),
-                (1, 0), (2, 0), (3, 0), (4, 0), (5, 0), (6, 0), (7, 0), (8, 0),
+                (0, 1), (1, 0), (0, 2), (2, 0), (0, 3), (3, 0), (0, 4), (4, 0),
+                (0, 5), (5, 0), (0, 6), (6, 0), (0, 7), (7, 0), (0, 8), (8, 0),
                 (1, 1), (1, 2), (2, 1), (2, 2),
             ]
         );
@@ -257,8 +253,8 @@ mod tests {
         assert_eq!(
             Board::neighbours((1, 1)),
             vec![
-                (1, 0), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8),
-                (0, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1), (8, 1),
+                (1, 0), (0, 1), (1, 2), (2, 1), (1, 3), (3, 1), (1, 4), (4, 1),
+                (1, 5), (5, 1), (1, 6), (6, 1), (1, 7), (7, 1), (1, 8), (8, 1),
                 (0, 0), (0, 2), (2, 0), (2, 2),
             ]
         );
@@ -269,8 +265,8 @@ mod tests {
         assert_eq!(
             Board::neighbours((5, 5)),
             vec![
-                (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 6), (5, 7), (5, 8),
-                (0, 5), (1, 5), (2, 5), (3, 5), (4, 5), (6, 5), (7, 5), (8, 5),
+                (5, 0), (0, 5), (5, 1), (1, 5), (5, 2), (2, 5), (5, 3), (3, 5),
+                (5, 4), (4, 5), (5, 6), (6, 5), (5, 7), (7, 5), (5, 8), (8, 5),
                 (3, 3), (3, 4), (4, 3), (4, 4),
             ]
         );
@@ -281,8 +277,8 @@ mod tests {
         assert_eq!(
             Board::neighbours((6, 2)),
             vec![
-                (6, 0), (6, 1), (6, 3), (6, 4), (6, 5), (6, 6), (6, 7), (6, 8),
-                (0, 2), (1, 2), (2, 2), (3, 2), (4, 2), (5, 2), (7, 2), (8, 2),
+                (6, 0), (0, 2), (6, 1), (1, 2), (2, 2), (6, 3), (3, 2), (6, 4),
+                (4, 2), (6, 5), (5, 2), (6, 6), (6, 7), (7, 2), (6, 8), (8, 2),
                 (7, 0), (7, 1), (8, 0), (8, 1),
             ]
         );
@@ -292,16 +288,16 @@ mod tests {
     fn solve_hard() {
         // https://sudoku.tagesspiegel.de/sudoku-sehr-schwer/
         let mut board = board_from_string(
-            "92.   ...   ...\
-             5..   87.   ...\
-             .38   .91   ...\
+            "92.   ...   ...
+             5..   87.   ...
+             .38   .91   ...
 
-             .52   93.   16.\
-             .9.   ...   .3.\
-             .73   .64   98.\
+             .52   93.   16.
+             .9.   ...   .3.
+             .73   .64   98.
 
-             ...   41.   25.\
-             ...   .53   ..1\
+             ...   41.   25.
+             ...   .53   ..1
              ...   ...   .73"
         );
         board.solve();
@@ -328,16 +324,16 @@ mod tests {
     fn solve_normal() {
         // https://sudoku.tagesspiegel.de/
         let mut board = board_from_string(
-            "..4   ..5  .2.\
-             .52   .36  84.\
-             .16   .82  ...\
+            "..4   ..5  .2.
+             .52   .36  84.
+             .16   .82  ...
 
-             2..   .5.  4..\
-             ...   .1.  73.\
-             641   ...  ..8\
+             2..   .5.  4..
+             ...   .1.  73.
+             641   ...  ..8
 
-             ...   8..  ..7\
-             12.   ...  ..4\
+             ...   8..  ..7
+             12.   ...  ..4
              7..   ...  1.9"
         );
         board.solve();
@@ -365,16 +361,16 @@ mod tests {
     fn solve_very_hard() {
         // https://sudoku.zeit.de/sudoku-sehr-schwer 26.10.2019
         let mut board = board_from_string(
-            "4..   8..   3..\
-             59.   ..2   7..\
-             3..   574   ...\
+            "4..   8..   3..
+             59.   ..2   7..
+             3..   574   ...
 
-             9..   6..   28-\
-             6..   ,,5   1..\
-             81.   4..   ,,,\
+             9..   6..   28-
+             6..   ,,5   1..
+             81.   4..   ,,,
 
-             ,,,   ..9   ,,2\
-             28.   ,,,   .16\
+             ,,,   ..9   ,,2
+             28.   ,,,   .16
              .4.   ,,,   ..."
         );
         board.solve();
@@ -402,16 +398,16 @@ mod tests {
     fn solve_very_hard_2() {
         // http://opensudoku.moire.org/#about-puzzles
         let mut board = board_from_string(
-            "...   9..   2.3\
-             .26   ..3   .8.\
-             83.   7..   ...\
+            "...   9..   2.3
+             .26   ..3   .8.
+             83.   7..   ...
 
-             5.3   ..1   6..\
-             ...   .3.   ...\
-             ..2   5..   8.9\
+             5.3   ..1   6..
+             ...   .3.   ...
+             ..2   5..   8.9
 
-             ...   ..7   .61\
-             .6.   3..   47.\
+             ...   ..7   .61
+             .6.   3..   47.
              7.4   ..6   ..."
         );
         board.solve();
@@ -437,12 +433,12 @@ mod tests {
     #[test]
     fn solve_by_neighbourhood() {
         let mut board = board_from_string(
-            "..8   ...   ...\
-             914   536   ...\
-             657   ..8   ...\
+            "..8   ...   ...
+             914   536   ...
+             657   ..8   ...
 
-             ...   2..   ...\
-             ...   ...   ...\
+             ...   2..   ...
+             ...   ...   ...
              ...   ...   ..."
         );
         board.solve();
@@ -464,6 +460,44 @@ mod tests {
                 0, 0, 0,   0, 0, 0,   0, 0, 0,
                 0, 0, 0,   0, 0, 0,   0, 0, 0,
                 0, 0, 0,   0, 0, 0,   0, 0, 0,
+            ]
+        );
+    }
+
+    #[test]
+    #[ignore]
+    fn solve_very_hard_3() {
+        // https://sudoku.soeinding.de/strategie/strategie02d.php
+        // https://www.learn-sudoku.com/x-wing.html
+        let mut board = board_from_string(
+            "7..   526   9..
+             ...   43.   ...
+             ..2   ...   ...
+
+             ...   3..   ..8
+             ...   6.1   ..9
+             ..6   ..8   .5.
+
+             .4.   ..3   286
+             92.   .64   ..5
+             63.   ...   491"
+        );
+        board.solve();
+
+        assert_eq!(
+            board.to_num_vec(),
+            vec![
+                7, 8, 0,   5, 2, 6,   9, 1, 0,
+                0, 0, 0,   4, 3, 0,   8, 0, 2,
+                0, 0, 2,   0, 0, 0,   5, 0, 0,
+
+                0, 0, 0,   3, 0, 0,   6, 0, 8,
+                8, 0, 0,   6, 0, 1,   0, 2, 9,
+                0, 0, 6,   0, 0, 8,   1, 5, 0,
+
+                0, 4, 0,   0, 0, 3,   2, 8, 6,
+                9, 2, 0,   0, 6, 4,   0, 0, 5,
+                6, 3, 0,   0, 0, 0,   4, 9, 1
             ]
         );
     }

@@ -112,15 +112,17 @@ fn main() {
 
 fn board_from_string(data: &str) -> Board {
     let mut board = Board::new();
+
     board.fill(data.chars().filter(|c| !c.is_whitespace()).map(|c| {
         c.to_digit(10).and_then(|x| {
-            if 1 <= x && x <= 9 {
+            if (1..=9).contains(&x) {
                 Some(x as u8)
             } else {
                 None
             }
         })
     }));
+
     board
 }
 
@@ -130,10 +132,10 @@ mod tests {
     use sudoku::Field;
 
     fn to_string(board: &Board) -> String {
-        board.fields().iter().map(|x| match x {
+        board.fields().into_iter().map(|x| match x {
             Field::Options(_) => '_',
             Field::Value(v) => (v + 0x30).into(),
-        }).collect::<String>()
+        }).collect()
     }
 
     const TEST_BOARD : &str =
