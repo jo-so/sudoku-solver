@@ -1,12 +1,3 @@
-use clap::{
-    crate_authors,
-    crate_description,
-    crate_name,
-    crate_version,
-    App,
-    Arg,
-};
-
 use std::{
     io::{self, Read},
     process,
@@ -16,25 +7,25 @@ mod sudoku;
 use sudoku::{Board, Field};
 
 fn main() {
-    let args = App::new(crate_name!())
-        .version(crate_version!())
-        .author(crate_authors!("\n"))
-        .about(crate_description!())
+    let args = clap::Command::new(clap::crate_name!())
+        .version(clap::crate_version!())
+        .author(clap::crate_authors!("\n"))
+        .about(clap::crate_description!())
         .arg(
-            Arg::new("quiet")
+            clap::Arg::new("quiet")
                 .short('q')
-                .about("Don't print infomational messages")
+                .help("Don't print infomational messages")
         ).arg(
-            Arg::new("steps")
+            clap::Arg::new("steps")
                 .short('s')
-                .about("Print the steps for solution")
+                .help("Print the steps for solution")
         ).arg(
-            Arg::new("unsolved")
+            clap::Arg::new("unsolved")
                 .short('u')
-                .about("Print possible values for unsolved positions")
+                .help("Print possible values for unsolved positions")
         ).get_matches();
 
-    let quiet = args.is_present("quiet");
+    let quiet = args.contains_id("quiet");
 
     if !quiet {
         println!("Input initial board setting (space and newline are ignored, \
@@ -54,13 +45,13 @@ fn main() {
     let mut board = board_from_string(&buffer);
     drop(buffer);
 
-    if args.is_present("steps") {
+    if args.contains_id("steps") {
         board.record_steps(true);
     }
 
     board.solve();
 
-    let mut unsolved = if args.is_present("unsolved") {
+    let mut unsolved = if args.contains_id("unsolved") {
         Some(Vec::new())
     } else {
         None
